@@ -1,0 +1,55 @@
+{
+  "cli": { "version": ">= 13.0.0", "appVersionSource": "remote" },
+  "build": {
+    "_comment": "Three profiles. development = local dev client; preview = internal QA via TestFlight / Play Internal; production = stores.",
+
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios":     { "simulator": true },
+      "android": { "buildType": "apk", "gradleCommand": ":app:assembleDebug" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:4000",
+        "EXPO_PUBLIC_WS_URL":  "ws://localhost:4000"
+      }
+    },
+
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "ios":     { "resourceClass": "m-medium" },
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging-api.chatrix.app",
+        "EXPO_PUBLIC_WS_URL":  "wss://staging-api.chatrix.app"
+      }
+    },
+
+    "production": {
+      "channel": "production",
+      "autoIncrement": true,
+      "ios":     { "resourceClass": "m-medium" },
+      "android": { "buildType": "app-bundle" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.chatrix.app",
+        "EXPO_PUBLIC_WS_URL":  "wss://api.chatrix.app"
+      }
+    }
+  },
+
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId":         "you@example.com",
+        "ascAppId":        "REPLACE_WITH_APP_STORE_CONNECT_ID",
+        "appleTeamId":     "REPLACE_WITH_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "production",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}

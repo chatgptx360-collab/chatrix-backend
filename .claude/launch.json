@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@chatrix/backend", "dev"],
+      "port": 4000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@chatrix/web", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "mobile",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@chatrix/mobile", "dev"],
+      "port": 8081
+    }
+  ]
+}

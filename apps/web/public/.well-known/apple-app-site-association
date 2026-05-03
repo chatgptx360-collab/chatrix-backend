@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_WITH_TEAM_ID.app.chatrix.client"],
+        "components": [
+          {
+            "/":       "/u/*",
+            "comment": "Public profile pages — chatrix.app/u/<username>"
+          },
+          {
+            "/":       "/@*",
+            "comment": "Brand share-link pattern — chatrix.app/@<username>"
+          },
+          {
+            "/":       "/chats/*",
+            "comment": "Direct chat deep links"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["REPLACE_WITH_TEAM_ID.app.chatrix.client"]
+  }
+}

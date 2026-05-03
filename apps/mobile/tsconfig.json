@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@chatrix/shared": ["../../packages/shared/src"],
+      "@chatrix/shared/*": ["../../packages/shared/src/*"],
+      "@chatrix/ui": ["../../packages/ui/src"],
+      "@chatrix/ui/*": ["../../packages/ui/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

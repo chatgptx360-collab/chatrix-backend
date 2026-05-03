@@ -1,0 +1,19 @@
+# Don't ship dev cruft into the build context — keeps `docker build` fast.
+node_modules
+.next
+.expo
+dist
+build
+coverage
+.turbo
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+README.md

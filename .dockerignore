@@ -1,0 +1,33 @@
+# Keep the Railway upload small — exclude things irrelevant to the backend
+# Dockerfile build context.
+
+node_modules
+.next
+.expo
+.storage
+.turbo
+.vercel
+dist
+build
+coverage
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# Other apps that aren't part of the backend image
+apps/web
+apps/mobile
+
+# Docs + infra meta
+docs
+.github
+infra/scripts
+README.md
+*.md

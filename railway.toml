@@ -1,0 +1,15 @@
+# Railway config — backend service.
+# The Dockerfile in apps/backend/ expects the monorepo root as its build
+# context (it copies packages/shared, packages/ui, etc.).
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/backend/Dockerfile"
+
+[deploy]
+# startCommand is intentionally OMITTED — the Dockerfile's CMD already runs
+# from the right WORKDIR. Setting it here would override and may run from `/`.
+healthcheckPath = "/v1/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

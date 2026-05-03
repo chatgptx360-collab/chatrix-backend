@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Chatrix",
+    "slug": "chatrix",
+    "scheme": "chatrix",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#09090f"
+    },
+    "ios": {
+      "bundleIdentifier": "app.chatrix.client",
+      "supportsTablet": true,
+      "associatedDomains": ["applinks:chatrix.app"]
+    },
+    "android": {
+      "package": "app.chatrix.client",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#09090f"
+      }
+    },
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        { "icon": "./assets/notification-icon.png", "color": "#8B79FF" }
+      ]
+    ],
+    "extra": {
+      "eas": { "projectId": "REPLACE_ME_WITH_EAS_PROJECT_ID" }
+    }
+  }
+}

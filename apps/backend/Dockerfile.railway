@@ -1,0 +1,48 @@
+# =====================================================
+# Chatrix backend — Railway-friendly image.
+#
+# Differs from the production Dockerfile:
+#   - Uses npm + `file:` workspace deps instead of pnpm + workspaces.
+#     (Railway's build env has the same pnpm fragility we hit on Vercel.)
+#   - Runs the TS source directly via `tsx` instead of pre-compiling to JS.
+#     This skips the `packages/shared` build step entirely — shared is
+#     consumed as TS by tsx at runtime. Adds ~1s to cold start; trivial
+#     for a demo backend.
+#
+# The "real" production image (apps/backend/Dockerfile) is still the right
+# choice for self-host once we have a CI step that generates a pnpm-lock.
+# =====================================================
+
+FROM node:20-alpine AS deps
+RUN apk add --no-cache python3 make g++ libc6-compat
+WORKDIR /app
+
+# `npm install` with a `file:` dep needs the target directory to exist
+# before it'll resolve, so we copy packages/shared first (full source —
+# only its package.json is referenced by npm but the source is needed at
+# runtime).
+COPY packages/shared packages/shared
+COPY apps/backend/package.json apps/backend/package.json
+RUN cd apps/backend && npm install --no-audit --no-fund --legacy-peer-deps --workspaces=false --install-strategy=hoisted
+
+# ---- runtime ---------------------------------------------------------------
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+RUN apk add --no-cache dumb-init && addgroup -S app && adduser -S app -G app
+WORKDIR /app
+
+COPY --from=deps --chown=app:app /app/apps/backend/node_modules apps/backend/node_modules
+COPY --from=deps --chown=app:app /app/packages/shared packages/shared
+COPY --chown=app:app apps/backend apps/backend
+COPY --chown=app:app db db
+
+USER app
+WORKDIR /app/apps/backend
+EXPOSE 4000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -q -O - http://127.0.0.1:4000/v1/health | grep -q '"status"' || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+# tsx is installed as a regular dep — call its binary directly so we skip
+# npx's resolution overhead on every cold start.
+CMD ["./node_modules/.bin/tsx", "src/main.ts"]
