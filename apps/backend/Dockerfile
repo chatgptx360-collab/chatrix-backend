@@ -60,6 +60,9 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -fsS http://127.0.0.1:4000/v1/health > /dev/null || exit 1
 
-# Run TypeScript directly via tsx. Slightly slower cold start vs compiled JS,
-# but avoids a separate build step + the @chatrix/shared compile cascade.
-CMD ["npx", "--no-install", "tsx", "src/main.ts"]
+# Run TypeScript directly via @swc-node/register. We previously used tsx,
+# but tsx's esbuild backend does not reliably emit decorator metadata
+# (design:paramtypes), which Nest needs for constructor-based DI. SWC
+# emits the metadata correctly when emitDecoratorMetadata is set in
+# tsconfig.json, which it is.
+CMD ["node", "-r", "@swc-node/register", "src/main.ts"]
