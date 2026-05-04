@@ -39,6 +39,14 @@ WORKDIR /app/apps/backend
 RUN npm install --no-audit --no-fund --legacy-peer-deps --workspaces=false \
  && npm cache clean --force
 
+# Also install @chatrix/shared's own deps (zod). Required because at runtime
+# tsx loads packages/shared/src/**.ts directly, and Node resolves `zod` from
+# that file's location — it never walks into apps/backend/node_modules.
+WORKDIR /app/packages/shared
+RUN npm install --no-audit --no-fund --legacy-peer-deps --workspaces=false --omit=dev \
+ && npm cache clean --force
+WORKDIR /app/apps/backend
+
 # 3. Source + tsconfig + migrations
 COPY apps/backend/src              ./src/
 COPY apps/backend/tsconfig.json    ./
