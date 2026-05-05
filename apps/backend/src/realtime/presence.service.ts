@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 import Redis from "ioredis";
 import { REDIS } from "../redis/redis.module";
 import { DatabaseService } from "../db/database.service";
@@ -15,6 +15,7 @@ import type { UUID, PresenceState } from "@chatrix/shared/types";
 @Injectable()
 export class PresenceService {
   private static readonly TTL = 90;
+  private readonly logger = new Logger(PresenceService.name);
 
   constructor(
     @Inject(REDIS) private readonly redis: Redis,
@@ -28,7 +29,14 @@ export class PresenceService {
       .expire(`presence:sockets:${userId}`, PresenceService.TTL)
       .set(`presence:user:${userId}`, "online", "EX", PresenceService.TTL)
       .exec();
-    await this.snapshotToDb(userId, "online");
+    // Best-effort DB snapshot. A failure here must NOT break socket
+    // connection (and hence the whole signup→connect flow) — Redis already
+    // holds the authoritative live state. The previous code propagated the
+    // rejection up to the gateway's async handler, where Node's default
+    // unhandled-rejection policy terminated the process.
+    this.snapshotToDb(userId, "online").catch((err) =>
+      this.logger.error(`presence snapshotToDb(online) failed for ${userId}: ${(err as Error).message}`),
+    );
   }
 
   async removeSocket(userId: UUID, socketId: string): Promise<PresenceState> {
@@ -40,7 +48,9 @@ export class PresenceService {
     const count = (remaining?.[1]?.[1] as number | undefined) ?? 0;
     if (count === 0) {
       await this.redis.set(`presence:user:${userId}`, "offline", "EX", PresenceService.TTL);
-      await this.snapshotToDb(userId, "offline");
+      this.snapshotToDb(userId, "offline").catch((err) =>
+        this.logger.error(`presence snapshotToDb(offline) failed for ${userId}: ${(err as Error).message}`),
+      );
       return "offline";
     }
     return "online";
@@ -65,10 +75,14 @@ export class PresenceService {
   }
 
   private async snapshotToDb(userId: UUID, state: PresenceState) {
+    // $2 is referenced from two sites with different inferred types (the
+    // presence_state enum on the LHS, text in the literal comparison),
+    // which Postgres rejects with 42P08 "inconsistent types deduced for
+    // parameter $2". Casting on the comparison side resolves the conflict.
     await this.db.query(
       `UPDATE profiles
-          SET presence = $2,
-              last_seen_at = CASE WHEN $2 = 'offline' THEN now() ELSE last_seen_at END
+          SET presence     = $2::presence_state,
+              last_seen_at = CASE WHEN $2::text = 'offline' THEN now() ELSE last_seen_at END
         WHERE user_id = $1`,
       [userId, state],
     );
