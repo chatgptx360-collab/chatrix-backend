@@ -139,13 +139,23 @@ export default function ChatRoom() {
 
   // ---------- Send ----------
 
-  const handleSend = useCallback((body: string) => {
+  const handleSend = useCallback((
+    body: string,
+    attachmentIds?: string[],
+    kindHint?: "text" | "audio" | "image" | "video" | "file" | "gif",
+  ) => {
     const clientId = `c_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const replyTarget = replyTo;
+    // Composer hints the message kind based on the dominant attachment so
+    // optimistic placeholder + outgoing message kind match what the
+    // receiver should render. Server's `message:created` echo replaces this
+    // with the canonical row, so any imprecision is short-lived.
+    const kind: Message["kind"] = kindHint
+      ?? ((attachmentIds && attachmentIds.length > 0) ? "image" : "text");
     const placeholder: Message = {
       id: clientId, // temporary; replaced by server echo
-      chatId, senderId: me?.id ?? null, kind: "text",
-      body,
+      chatId, senderId: me?.id ?? null, kind,
+      body: body || null,
       replyToId: replyTarget?.id ?? null,
       replyTo: replyTarget ? {
         id: replyTarget.id, senderId: replyTarget.senderId,
@@ -161,8 +171,12 @@ export default function ChatRoom() {
     setReplyTo(null);                  // clear once submitted
 
     ApiMessages.send({
-      chatId, body, clientId, kind: "text",
+      chatId,
+      body: body || undefined,
+      clientId,
+      kind,
       replyToId: replyTarget?.id,
+      attachments: attachmentIds,
     }).catch(() => {
       setOptimistic((list) => list.filter((x) => x.clientId !== clientId));
     });
