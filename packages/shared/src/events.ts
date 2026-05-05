@@ -7,8 +7,11 @@
  * Both sides import from this file — there is no other source of truth.
  */
 import type {
+  Call,
+  CallKind,
   Chat,
   ChatMember,
+  IceServer,
   Message,
   MessageReaction,
   PresenceState,
@@ -16,6 +19,19 @@ import type {
   UUID,
   ISODateString,
 } from "./types";
+
+/** SDP / ICE payloads — mirror the WebRTC spec types we'll ship across. */
+export interface SdpPayload {
+  type: "offer" | "answer";
+  sdp: string;
+}
+/** Subset of RTCIceCandidateInit. */
+export interface IcePayload {
+  candidate: string;
+  sdpMLineIndex: number | null;
+  sdpMid: string | null;
+  usernameFragment?: string | null;
+}
 
 // ===== Client → Server =====
 
@@ -47,6 +63,41 @@ export interface ClientToServerEvents {
   "reaction:remove": (payload: { messageId: UUID; emoji: string }) => void;
 
   "presence:update": (state: Exclude<PresenceState, "offline">) => void;
+
+  // ----- Calls (1:1) -----
+  // The caller invites a peer. Server creates the Call row, validates that
+  // the peer is online + not already in a call, returns the freshly-allocated
+  // callId + ICE server config, and emits "call:incoming" to the callee.
+  "call:invite": (
+    payload: { calleeId: UUID; kind: CallKind; chatId?: UUID },
+    ack: (
+      result:
+        | { ok: true;  callId: UUID; iceServers: IceServer[] }
+        | { ok: false; code: string; message: string },
+    ) => void,
+  ) => void;
+
+  // Callee accepts. Server flips the row to 'answered' and returns ICE config.
+  "call:accept": (
+    payload: { callId: UUID },
+    ack: (
+      result:
+        | { ok: true;  iceServers: IceServer[] }
+        | { ok: false; code: string; message: string },
+    ) => void,
+  ) => void;
+
+  // Callee taps Decline before pickup.
+  "call:reject":   (payload: { callId: UUID; reason?: string }) => void;
+  // Caller hangs up before the callee picks up.
+  "call:cancel":   (payload: { callId: UUID }) => void;
+  // Either side after pickup.
+  "call:end":      (payload: { callId: UUID }) => void;
+
+  // WebRTC signalling — the server validates participation and relays.
+  "call:offer":    (payload: { callId: UUID; sdp: SdpPayload }) => void;
+  "call:answer":   (payload: { callId: UUID; sdp: SdpPayload }) => void;
+  "call:ice":      (payload: { callId: UUID; candidate: IcePayload }) => void;
 }
 
 // ===== Server → Client =====
@@ -82,6 +133,22 @@ export interface ServerToClientEvents {
   // Friends
   "friend:request":    (payload: { from: PublicUser }) => void;
   "friend:accepted":   (payload: { user: PublicUser }) => void;
+
+  // ----- Calls (server → client) -----
+  // Pushed to the callee's sockets when someone invites them.
+  "call:incoming":  (payload: { call: Call; from: PublicUser; iceServers: IceServer[] }) => void;
+  // Pushed to the caller when the callee accepts.
+  "call:accepted":  (payload: { callId: UUID; by: PublicUser }) => void;
+  // Pushed to the caller when the callee rejects.
+  "call:rejected":  (payload: { callId: UUID; reason?: string }) => void;
+  // Pushed to the callee when the caller cancels before pickup.
+  "call:cancelled": (payload: { callId: UUID }) => void;
+  // Pushed to whichever side did NOT call end().
+  "call:ended":     (payload: { callId: UUID; durationMs: number; status: Call["status"] }) => void;
+  // Relayed signalling — see ClientToServerEvents for shape.
+  "call:offer":     (payload: { callId: UUID; sdp: SdpPayload }) => void;
+  "call:answer":    (payload: { callId: UUID; sdp: SdpPayload }) => void;
+  "call:ice":       (payload: { callId: UUID; candidate: IcePayload }) => void;
 
   // Server-pushed errors that don't fit a specific ack
   "error":             (payload: { code: string; message: string }) => void;

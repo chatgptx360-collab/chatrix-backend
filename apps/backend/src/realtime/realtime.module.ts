@@ -4,11 +4,15 @@ import { CHAT_GATEWAY } from "./chat-gateway.token";
 import { PresenceService } from "./presence.service";
 import { AuthModule } from "../modules/auth/auth.module";
 import { MessagesModule } from "../modules/messages/messages.module";
+import { CallsModule } from "../modules/calls/calls.module";
 
 @Module({
   imports: [
     forwardRef(() => AuthModule),
     forwardRef(() => MessagesModule),
+    // CallsModule exports CallsService + IceConfigService so the gateway
+    // can drive call state transitions and hand out ICE config.
+    CallsModule,
   ],
   providers: [
     ChatGateway,

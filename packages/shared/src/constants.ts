@@ -37,10 +37,51 @@ export const MEDIA_MAX_BYTES = {
 export const MEDIA_ALLOWED_MIME = {
   image: ["image/jpeg", "image/png", "image/webp", "image/heic"],
   gif:   ["image/gif", "image/webp"],
-  audio: ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/wav"],
+  audio: [
+    "audio/webm",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/mpeg",     // mp3
+    "audio/mp3",      // some browsers report this
+    "audio/wav",
+    "audio/x-wav",
+    "audio/aac",
+    "audio/x-m4a",
+  ],
   video: ["video/mp4", "video/webm", "video/quicktime"],
-  file:  ["*/*"],
+  // Locked allow-list for arbitrary attachments. Anything outside this list
+  // is rejected at /media/init — no more `*/*` wildcard.
+  file: [
+    "application/pdf",
+    "application/msword",                                                                 // .doc
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",            // .docx
+    "application/vnd.ms-excel",                                                            // .xls
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",                  // .xlsx
+    "application/vnd.ms-powerpoint",                                                       // .ppt
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",          // .pptx
+    "text/plain",                                                                          // .txt
+    "text/csv",
+    "text/markdown",
+    "application/json",
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/vnd.rar",
+    "application/x-rar-compressed",
+    "application/x-7z-compressed",
+    "application/x-tar",
+    "application/gzip",
+  ],
 } as const;
+
+// ----- Voice notes -----
+// Hard cap is enforced server-side via MEDIA_MAX_BYTES.audio. The duration
+// cap is a UX guard so users don't inadvertently record minute-long messages.
+export const VOICE_NOTE_MAX_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+// ----- Calls -----
+export const CALL_RING_TIMEOUT_MS = 45_000;          // unanswered → missed after 45 s
+export const CALL_HEARTBEAT_INTERVAL_MS = 15_000;    // peers ping each other so a hard
+                                                      // disconnect can be detected quickly
 
 // ----- Reactions -----
 export const REACTION_MAX_PER_USER_PER_MESSAGE = 6;

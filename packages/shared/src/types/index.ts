@@ -180,6 +180,48 @@ export interface MediaFile {
   createdAt: ISODateString;
 }
 
+// ===== Calls =====
+
+export type CallKind   = "voice" | "video";
+export type CallStatus = "ringing" | "answered" | "declined" | "missed" | "ended" | "failed" | "cancelled";
+
+/**
+ * 1:1 call lifecycle.
+ *
+ *   ringing → answered → ended           (happy path)
+ *   ringing → declined                   (callee tapped Decline)
+ *   ringing → cancelled                  (caller hung up before pickup)
+ *   ringing → missed                     (timeout / callee offline beyond TTL)
+ *   *       → failed                     (signalling error, peer disconnect)
+ *
+ * `durationMs` is only populated once the call ends from the `answered` state.
+ */
+export interface Call {
+  id: UUID;
+  chatId: UUID | null;
+  callerId: UUID;
+  calleeId: UUID;
+  kind: CallKind;
+  status: CallStatus;
+  startedAt: ISODateString;
+  answeredAt: ISODateString | null;
+  endedAt: ISODateString | null;
+  durationMs: number | null;
+  // Hydrated when returned from history endpoints:
+  caller?: PublicUser;
+  callee?: PublicUser;
+}
+
+/**
+ * RTCIceServer-compatible config returned by GET /v1/calls/ice-servers.
+ * Clients pass these directly to `new RTCPeerConnection({ iceServers })`.
+ */
+export interface IceServer {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+}
+
 // ===== Notifications =====
 
 export type NotificationKind =

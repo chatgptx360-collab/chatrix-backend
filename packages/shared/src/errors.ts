@@ -39,6 +39,14 @@ export const ErrorCode = {
   MEDIA_TOO_LARGE:          "MEDIA_TOO_LARGE",
   MEDIA_BAD_MIME:           "MEDIA_BAD_MIME",
   MEDIA_UPLOAD_FAILED:      "MEDIA_UPLOAD_FAILED",
+
+  // Calls
+  CALL_NOT_FOUND:           "CALL_NOT_FOUND",
+  CALL_NOT_PARTICIPANT:     "CALL_NOT_PARTICIPANT",
+  CALL_INVALID_STATE:       "CALL_INVALID_STATE",
+  CALL_PEER_OFFLINE:        "CALL_PEER_OFFLINE",
+  CALL_PEER_BUSY:           "CALL_PEER_BUSY",
+  CALL_SELF_INVITE:         "CALL_SELF_INVITE",
 } as const;
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

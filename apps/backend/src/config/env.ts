@@ -56,6 +56,14 @@ const schema = z.object({
   WEB_PUSH_VAPID_PRIVATE: z.string().optional(),
   WEB_PUSH_CONTACT: z.string().default("mailto:admin@chatrix.app"),
 
+  // ----- Calls / WebRTC -----
+  // Single TURN url, or comma-separated list (e.g. "turn:foo:3478,turns:foo:5349").
+  // When unset, only public STUN is offered to clients — calls behind strict
+  // NAT will fail to traverse.
+  TURN_URL: z.string().optional(),
+  TURN_USERNAME: z.string().optional(),
+  TURN_CREDENTIAL: z.string().optional(),
+
   ADMIN_BOOTSTRAP_EMAIL: z.string().email().optional(),
 });
 

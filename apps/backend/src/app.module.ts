@@ -21,6 +21,7 @@ import { ReportsModule } from "./modules/reports/reports.module";
 import { AdminModule } from "./modules/admin/admin.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { HealthModule } from "./modules/health/health.module";
+import { CallsModule } from "./modules/calls/calls.module";
 
 /**
  * Top-level module composition.
@@ -58,6 +59,7 @@ import { HealthModule } from "./modules/health/health.module";
     NotificationsModule,
     ReportsModule,
     AdminModule,
+    CallsModule,
     RealtimeModule,
     HealthModule,
   ],
