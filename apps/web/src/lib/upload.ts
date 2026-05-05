@@ -26,6 +26,8 @@ export interface UploadOptions {
   onProgress?: (pct: number) => void;
   /** Optional abort signal. */
   signal?: AbortSignal;
+  /** Audio/video duration hint in ms (saves the server a probe). */
+  durationMs?: number;
 }
 
 /**
@@ -47,6 +49,7 @@ export async function uploadFile(file: File, opts: UploadOptions): Promise<Media
       sizeBytes: file.size,
       width:  dims?.width,
       height: dims?.height,
+      durationMs: opts.durationMs,
     },
   });
 

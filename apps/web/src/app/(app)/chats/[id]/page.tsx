@@ -143,12 +143,20 @@ export default function ChatRoomPage() {
 
   // ---------- Send ----------
 
-  const handleSend = useCallback((body: string, attachmentIds?: string[]) => {
+  const handleSend = useCallback((
+    body: string,
+    attachmentIds?: string[],
+    kindHint?: "text" | "audio" | "image" | "video" | "file" | "gif",
+  ) => {
     const clientId = `c_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const replyTarget = replyTo;
-    // Image-with-or-without-caption keeps `kind: image` so the bubble renders
-    // it as an image; pure text stays text. The server validates this.
-    const kind: Message["kind"] = (attachmentIds && attachmentIds.length > 0) ? "image" : "text";
+    // Composer passes an explicit kind for audio (voice notes). For other
+    // attachments we keep the legacy default of `image` — the server-rendered
+    // message will replace this with the canonical kind based on the actual
+    // media row, so a misidentified placeholder kind is purely cosmetic until
+    // the round-trip completes.
+    const kind: Message["kind"] = kindHint
+      ?? ((attachmentIds && attachmentIds.length > 0) ? "image" : "text");
 
     const placeholder: Message = {
       id: clientId,
