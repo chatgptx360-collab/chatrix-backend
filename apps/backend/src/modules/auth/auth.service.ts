@@ -37,8 +37,12 @@ export class AuthService {
   async signup(input: SignupInput, ctx: { userAgent?: string; ip?: string }): Promise<AuthSession> {
     const passwordHash = await this.password.hash(input.password);
 
-    return this.db.tx(async (client) => {
-      // Conflict-aware insert — surface the right error code instead of a generic 500.
+    // Phase 1: create user + profile + device link in a single transaction so
+    // they're either all there or none. We deliberately don't issue the
+    // session inside the tx because the session insert references users(id)
+    // via FK, and `tokens.issueRefreshToken` uses a fresh pool connection
+    // that cannot see the uncommitted row — the FK check would fail.
+    const { user, deviceId } = await this.db.tx(async (client) => {
       const { rows } = await client.query<UserRow>(
         `INSERT INTO users (username, email, password_hash)
          VALUES ($1, $2, $3)
@@ -62,15 +66,19 @@ export class AuthService {
       );
 
       const deviceId = await this.linkDevice(client, user.id, input.device);
-      const session = await this.issueSession(user, { ...ctx, deviceId });
-
-      // Fire-and-forget the verification email. Failure here must not block
-      // signup — the user can request a resend.
-      this.queueVerificationEmail(user.id, user.email, user.username).catch((err) =>
-        this.logger.error(`verification email failed for ${user.email}: ${(err as Error).message}`),
-      );
-      return session;
+      return { user, deviceId };
     });
+
+    // Phase 2: now that the user is committed, issue the session and queue
+    // the verification email. A failure here leaves the user able to log in
+    // normally — strictly better than failing the whole signup.
+    const session = await this.issueSession(user, { ...ctx, deviceId });
+
+    this.queueVerificationEmail(user.id, user.email, user.username).catch((err) =>
+      this.logger.error(`verification email failed for ${user.email}: ${(err as Error).message}`),
+    );
+
+    return session;
   }
 
   /** Public — used by signup + the resend-verification endpoint. */
