@@ -14,6 +14,7 @@ import { ApiChats, ApiMessages } from "@/lib/api/endpoints";
 import { useAuthStore } from "@/lib/auth/store";
 import { useSocketEvent, getSocket } from "@/lib/socket";
 import { formatLastSeen } from "@/lib/format";
+import { startCall, useCall } from "@/lib/call";
 import type { Message, UUID } from "@chatrix/shared/types";
 
 /**
@@ -51,6 +52,7 @@ export default function ChatRoomPage() {
   const [picker, setPicker] = useState<{ messageId: string; rect: DOMRect; mine: boolean } | null>(null);
 
   const peer = chat?.members?.[0]?.user;
+  const callPhase = useCall().phase;
   const headerTitle = chat?.type === "dm"
     ? (peer?.displayName ?? `@${peer?.username ?? ""}`)
     : (chat?.title ?? "Group");
@@ -310,8 +312,24 @@ export default function ChatRoomPage() {
         )}
 
         <div className="flex items-center gap-1.5">
-          <HeaderIconButton aria-label="Voice call"><Phone size={18} /></HeaderIconButton>
-          <HeaderIconButton aria-label="Video call"><Video size={18} /></HeaderIconButton>
+          {chat?.type === "dm" && peer && (
+            <>
+              <HeaderIconButton
+                aria-label="Voice call"
+                disabled={callPhase !== "idle"}
+                onClick={() => startCall({ calleeId: peer.id, peer, kind: "voice", chatId }).catch(() => {})}
+              >
+                <Phone size={18} />
+              </HeaderIconButton>
+              <HeaderIconButton
+                aria-label="Video call"
+                disabled={callPhase !== "idle"}
+                onClick={() => startCall({ calleeId: peer.id, peer, kind: "video", chatId }).catch(() => {})}
+              >
+                <Video size={18} />
+              </HeaderIconButton>
+            </>
+          )}
           <HeaderIconButton aria-label="More"><MoreHorizontal size={18} /></HeaderIconButton>
         </div>
       </header>
@@ -396,7 +414,7 @@ function HeaderIconButton({ children, ...rest }: React.ButtonHTMLAttributes<HTML
   return (
     <button
       {...rest}
-      className="h-9 w-9 rounded-xl flex items-center justify-center text-muted hover:text-fg hover:bg-elevated transition"
+      className="h-9 w-9 rounded-xl flex items-center justify-center text-muted hover:text-fg hover:bg-elevated disabled:opacity-40 disabled:hover:text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed transition"
     >
       {children}
     </button>

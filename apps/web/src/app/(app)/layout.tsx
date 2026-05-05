@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth/store";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { CallUI } from "@/components/call/CallUI";
 
 /**
  * Authenticated shell. Two responsibilities:
@@ -35,6 +36,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="h-screen w-screen flex overflow-hidden bg-bg">
       <Sidebar />
       <main className="flex-1 min-w-0 flex flex-col bg-bg">{children}</main>
+      {/* Mounted at the shell so a call modal/screen can pop in from any page. */}
+      <CallUI />
     </div>
   );
 }
