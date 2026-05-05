@@ -57,9 +57,21 @@ const schema = z.object({
   WEB_PUSH_CONTACT: z.string().default("mailto:admin@chatrix.app"),
 
   // ----- Calls / WebRTC -----
-  // Single TURN url, or comma-separated list (e.g. "turn:foo:3478,turns:foo:5349").
-  // When unset, only public STUN is offered to clients — calls behind strict
-  // NAT will fail to traverse.
+  // Two ways to configure TURN, tried in order:
+  //
+  //   1. Cloudflare Calls TURN (RECOMMENDED — generous free tier).
+  //      Set CLOUDFLARE_TURN_KEY_ID + CLOUDFLARE_TURN_API_TOKEN. The
+  //      backend mints short-lived credentials via Cloudflare's API
+  //      and caches them for ~half their TTL.
+  //
+  //   2. Static creds (Twilio, Open Relay, self-hosted coturn).
+  //      TURN_URL accepts a single URL or comma-separated list, e.g.
+  //      "turn:foo:3478,turns:foo:5349".
+  //
+  // When neither is set, only public STUN is offered — calls behind
+  // strict NAT will fail to traverse.
+  CLOUDFLARE_TURN_KEY_ID: z.string().optional(),
+  CLOUDFLARE_TURN_API_TOKEN: z.string().optional(),
   TURN_URL: z.string().optional(),
   TURN_USERNAME: z.string().optional(),
   TURN_CREDENTIAL: z.string().optional(),

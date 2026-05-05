@@ -219,7 +219,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const calleeOnline = await this.isUserOnline(payload.calleeId);
 
       const from = await this.publicUser(callerId);
-      const iceServers = this.ice.getIceServers();
+      const iceServers = await this.ice.getIceServers();
 
       // Push the invite to every socket on the callee's user-room so it
       // rings on all their devices simultaneously.
@@ -259,7 +259,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const by = await this.publicUser(calleeId);
       this.emitToUser(call.callerId, "call:accepted", { callId: call.id, by });
 
-      return { ok: true as const, iceServers: this.ice.getIceServers() };
+      return { ok: true as const, iceServers: await this.ice.getIceServers() };
     } catch (err) {
       if (err instanceof ChatrixError) return { ok: false as const, code: err.code, message: err.message };
       this.logger.error(`call:accept failed: ${(err as Error).message}`, (err as Error).stack);

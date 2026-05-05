@@ -36,9 +36,13 @@ export class CallsController {
   /**
    * GET /v1/calls/ice-servers — RTCIceServer[] for the client to feed
    * directly into `new RTCPeerConnection({ iceServers })`. No request body.
+   *
+   * Async because the Cloudflare-backed config path mints short-lived
+   * credentials over the network on the first request after a cache miss
+   * (~once every 12h).
    */
   @Get("ice-servers")
-  iceServers() {
-    return { iceServers: this.ice.getIceServers() };
+  async iceServers() {
+    return { iceServers: await this.ice.getIceServers() };
   }
 }
