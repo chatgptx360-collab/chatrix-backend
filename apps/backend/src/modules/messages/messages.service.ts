@@ -1,10 +1,16 @@
-import { Injectable, Inject, forwardRef, Logger } from "@nestjs/common";
+import { Injectable, Inject, Logger } from "@nestjs/common";
 import { ChatrixError, ErrorCode } from "@chatrix/shared/errors";
 import type { Message, MessageReaction, UUID, CursorPage } from "@chatrix/shared/types";
 import type { SendMessageInput } from "@chatrix/shared/schemas";
 import { MESSAGE_EDIT_WINDOW_MS } from "@chatrix/shared/constants";
 import { DatabaseService } from "../../db/database.service";
-import { ChatGateway } from "../../realtime/chat.gateway";
+// Type-only import to break the runtime cycle with realtime/chat.gateway —
+// MessagesService is loaded before ChatGateway via app.module's import order,
+// so a runtime import here forces ChatGateway to evaluate while MessagesService
+// is still initialising, which throws TDZ on swc/CJS output. The token below
+// gives Nest a non-class symbol to resolve at injection time.
+import type { ChatGateway } from "../../realtime/chat.gateway";
+import { CHAT_GATEWAY } from "../../realtime/chat-gateway.token";
 import { MediaService } from "../media/media.service";
 import { PushService } from "../notifications/push.service";
 import { PresenceService } from "../../realtime/presence.service";
@@ -42,7 +48,7 @@ export class MessagesService {
 
   constructor(
     private readonly db: DatabaseService,
-    @Inject(forwardRef(() => ChatGateway)) private readonly gw: ChatGateway,
+    @Inject(CHAT_GATEWAY) private readonly gw: ChatGateway,
     private readonly media: MediaService,
     private readonly push: PushService,
     private readonly presence: PresenceService,
